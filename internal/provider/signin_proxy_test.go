@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -14,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yetone/magpie/internal/netproxy"
 	"github.com/yetone/magpie/internal/plugin"
 	"github.com/yetone/magpie/internal/testenv"
 )
@@ -150,6 +152,37 @@ func TestSignInGoesThroughItsProxy(t *testing.T) {
 	bad := "ftp://x"
 	if _, err := StartSignInWith("codex", SignInOptions{Proxy: &bad}); err == nil {
 		t.Fatal("ftp://x was taken as a proxy")
+	}
+}
+
+// unpatchedClient leaves http.DefaultClient as a process that never ran
+// netproxy.Install has it: context-proxy-blind, as Go ships it. Like
+// dialsOut, it tells every host dialed that isn't this machine's, never
+// dialing it — so a request that was meant for a proxy shows up here.
+func unpatchedClient(t *testing.T) func() []string {
+	t.Helper()
+	var mu sync.Mutex
+	var out []string
+	dial := (&net.Dialer{Timeout: 5 * time.Second}).DialContext
+	plain := &http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if host, _, _ := net.SplitHostPort(addr); host != "127.0.0.1" && host != "::1" && host != "localhost" {
+			mu.Lock()
+			out = append(out, addr)
+			mu.Unlock()
+			return nil, &net.OpError{Op: "dial", Net: network, Err: net.UnknownNetworkError("test: no network")}
+		}
+		return dial(ctx, network, addr)
+	}}
+	old := http.DefaultClient.Transport
+	http.DefaultClient.Transport = plain
+	t.Cleanup(func() {
+		http.DefaultClient.Transport = old
+		plain.CloseIdleConnections()
+	})
+	return func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), out...)
 	}
 }
 
@@ -407,5 +440,55 @@ Account:
 		if !slices.Contains(got, want) {
 			t.Fatalf("ran %q, no %q", got, want)
 		}
+	}
+}
+
+// A Kimi Code sign-in — the device authorization, the token polled for,
+// the plan read — and a refresh later go through the proxy the sign-in
+// flow's context names (signInFlow.via: the subscription's here, #1663),
+// on a client of the sign-in's own, whatever the process has done to
+// http.DefaultClient: one that never ran netproxy.Install leaves it
+// context-proxy-blind, and the fake vendor answers only at the proxy.
+func TestKimiCodeSignInGoesThroughItsProxy(t *testing.T) {
+	signIn(t)
+	dialed := unpatchedClient(t)
+	f := &kimiFake{t: t}
+	f.token = func(_ url.Values, poll, _ int) (int, any) {
+		if poll == 1 {
+			return 200, map[string]any{"error": "authorization_pending"}
+		}
+		return f.tokens("user-42", "rt-1", 900)
+	}
+	proxy := httptest.NewServer(http.HandlerFunc(f.serve))
+	t.Cleanup(proxy.Close)
+	t.Cleanup(KimiCodeRegionForTest(KimiCodePlanID, "http://kimi.invalid", "http://kimi.invalid/coding/v1"))
+	setProxies(t, KimiCodePlanID, proxy.URL, nil)
+
+	done := kimiSignIn(t, KimiCodePlanID, 15*time.Second)
+	if done.State != "done" || done.User != "user-42" {
+		t.Fatalf("sign-in ended %+v", done)
+	}
+	if f.polls.Load() == 0 || f.usageReads.Load() == 0 {
+		t.Fatalf("the subscription's proxy saw %d polls and %d usage reads", f.polls.Load(), f.usageReads.Load())
+	}
+
+	// a refresh goes the same way: through the proxy its context names
+	if err := editSideLogin(KimiCodePlanID, "user-42", func(ls []savedLogin, i int) ([]savedLogin, error) {
+		a, _ := kimiCodeSaved(ls[i])
+		a.Expires = time.Now().Add(-time.Minute).Unix()
+		ls[i].Auth, _ = json.Marshal(a)
+		return ls, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	f.token = func(_ url.Values, _, _ int) (int, any) { return f.tokens("user-42", "rt-2", 900) }
+	if _, err := kimiCodeToken(netproxy.With(context.Background(), proxy.URL), KimiCodePlanID, "user-42"); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.refreshes.Load(); n != 1 {
+		t.Fatalf("the proxy saw %d refreshes, want the one", n)
+	}
+	if d := dialed(); len(d) != 0 {
+		t.Fatalf("dialed %v past the proxy", d)
 	}
 }

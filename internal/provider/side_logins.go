@@ -285,8 +285,8 @@ func addSideLogin(l savedLogin, ownUser string, dup func(savedLogin)) (err error
 				ls[i].AccessSKU = l.AccessSKU
 			}
 			// a new sign-in: the token its vendor refused is gone
-			// (copilot_lapsed.go, signin_revoked.go)
-			if l.Agent == "copilot" || strings.HasPrefix(ls[i].Refused, revokedPrefix) {
+			// (copilot_lapsed.go, signin_revoked.go, kimi_signin.go)
+			if l.Agent == "copilot" || l.Agent == KimiCodePlanID || l.Agent == KimiCodePlanCNID || strings.HasPrefix(ls[i].Refused, revokedPrefix) {
 				ls[i].Lapsed, ls[i].Refused = "", ""
 			}
 			if old.own() {
@@ -305,7 +305,7 @@ func addSideLogin(l savedLogin, ownUser string, dup func(savedLogin)) (err error
 // agent's own store as Claude Code's and Codex's are.
 func sideAgent(agent string) bool {
 	switch agent {
-	case "grok", "copilot", "zcode", "kiro", "devin", "workbuddy", WorkBuddyAIID, CommandCodePlanID, "gemini", "antigravity", "qoder", QoderCNID, "zed", "factory", MiMoID, ChatGPTAPIID:
+	case "grok", "copilot", "zcode", "kiro", "devin", "workbuddy", WorkBuddyAIID, CommandCodePlanID, "gemini", "antigravity", "qoder", QoderCNID, "zed", "factory", MiMoID, ChatGPTAPIID, KimiCodePlanID, KimiCodePlanCNID:
 		return true
 	}
 	return false

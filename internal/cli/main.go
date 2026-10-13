@@ -172,6 +172,7 @@ func Main(v string) {
 	}
 	endProbesOnSignal()
 	gateway.Version = version
+	provider.Version = version
 	netproxy.Install()
 	update.GUI = hasGUI
 	err = run(os.Args[1:])

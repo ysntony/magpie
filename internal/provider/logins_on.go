@@ -57,6 +57,8 @@ func SetLoginOn(agent, user string, on bool) error {
 		return setFactoryLoginOn(user, on)
 	case MiMoID:
 		return setMiMoLoginOn(user, on)
+	case KimiCodePlanID, KimiCodePlanCNID:
+		return setKimiCodeLoginOn(agent, user, on)
 	case ChatGPTAPIID:
 		return setSIWCLoginOn(user, on)
 	case "gemini", "antigravity":
@@ -184,6 +186,9 @@ func (p Provider) alsoOn() []Provider {
 	}
 	if p.Account != nil && p.Account.Agent == MiMoID {
 		return mimoAlsoOn()
+	}
+	if p.Account != nil && (p.Account.Agent == KimiCodePlanID || p.Account.Agent == KimiCodePlanCNID) {
+		return kimiCodeAlsoOn(p.Account.Agent)
 	}
 	if p.Account != nil && p.Account.Agent == ChatGPTAPIID {
 		return siwcAlsoOn()

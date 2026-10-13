@@ -285,6 +285,8 @@ func builtinLogins(agent string) (logins []Login, ok bool) {
 		logins = factoryLoginList()
 	case MiMoID:
 		logins = mimoLoginList()
+	case KimiCodePlanID, KimiCodePlanCNID:
+		logins = kimiCodeLoginList(agent)
 	case ChatGPTAPIID:
 		logins = siwcLoginList()
 	case "gemini", "antigravity":
@@ -328,6 +330,9 @@ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
 	}
 	if l.Agent == MiMoID {
 		return mimoLoginQuota(ctx, l)
+	}
+	if l.Agent == KimiCodePlanID || l.Agent == KimiCodePlanCNID {
+		return kimiCodeLoginQuota(ctx, l)
 	}
 	if l.Agent == "cursor" {
 		return cursorSubscriptionUsage(ctx, l.Plan)
