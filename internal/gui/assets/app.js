@@ -6085,6 +6085,8 @@ function accountPlan(a) {
   if (agent === "qoder-cn") return named("Qoder CN", a.plan && t(a.plan));
   if (agent === "zed") return named("Zed", a.plan && t(a.plan));
   if (agent === "mimo-app") return named("Xiaomi MiMo", a.plan && t(a.plan));
+  if (agent === "kimi-code-plan") return named("Kimi Code", a.plan && t(a.plan));
+  if (agent === "kimi-code-plan-cn") return named("Kimi Code CN", a.plan && t(a.plan));
   return a.plan || t("signed in");
 }
 
@@ -11653,6 +11655,13 @@ const SUBS = [
   { agent: "qoder-cn", name: "Qoder CN", icon: "qoder", plans: "Pro", own: true, risk: true,
     hint: "For accounts on qoder.cn: signed in with an Alibaba Cloud account or a phone number.",
     riskNote: "Qoder has no public API for this; magpie signs requests as its desktop client would, which Qoder may treat as third-party use and act on. Use an account you can afford to lose." },
+  // a Kimi Code membership, signed in with Kimi's device flow under the OAuth
+  // client the Kimi Code CLI ships; the keyed presets (kimi-code, kimi-code-cn)
+  // stay as they are. Kimi has two sites, whose accounts exist only there
+  { agent: "kimi-code-plan", name: "Kimi Code", icon: "kimi", plans: "Membership", own: true,
+    hint: "For accounts on kimi.ai, the global site." },
+  { agent: "kimi-code-plan-cn", name: "Kimi Code CN", icon: "kimi", plans: "Membership", own: true,
+    hint: "For accounts on kimi.com, the China site." },
   // the devin CLI's own account is read; more are signed in beside it, each in a data folder of magpie's
   { agent: "devin", name: "Devin", icon: "devin", plans: "Pro · Enterprise", own: true },
   // Zed's hosted models (Zed Pro, its trial), signed in at zed.dev as the editor is
@@ -12324,6 +12333,7 @@ function renderSigning(sub) {
       : sub.plugin ? (signing.instructions || (signing.pasteCode ? t("magpie opened the sign-in page. Paste the code it shows below.") : t("magpie opened the sign-in page. The account shows up here as soon as you're done.")))
       : signing.pasteCode ? t("magpie opened the sign-in page. Paste the code it shows below.")
       : signing.code && sub.agent === "factory" ? t("magpie opened Factory's sign-in page. Check it shows this code and confirm it; the account shows up here as soon as you're done.")
+      : signing.code && (sub.agent === "kimi-code-plan" || sub.agent === "kimi-code-plan-cn") ? t("magpie opened Kimi's sign-in page. Enter this code there; the account shows up here as soon as you're done.")
       : signing.code ? t("magpie opened GitHub's device page. Enter this code there; the account shows up here as soon as you're done.") : t("magpie opened the sign-in page. The account shows up here as soon as you're done.")));
   if (signing.code) {
     const code = el("span", "devcode");

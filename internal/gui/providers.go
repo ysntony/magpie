@@ -332,6 +332,12 @@ func accountLabel(p provider.Provider) (name, icon string) {
 	} else if a.Agent == provider.CommandCodePlanID {
 		// Command Code's CLI keeps the key its sign-in made
 		name, icon = "Command Code", "commandcode"
+	} else if a.Agent == provider.KimiCodePlanID {
+		// a Kimi Code membership signed in from magpie, not an agent's
+		name, icon = "Kimi Code", "kimi"
+	} else if a.Agent == provider.KimiCodePlanCNID {
+		// the China site's membership, told apart from the global one
+		name, icon = "Kimi Code CN", "kimi"
 	}
 	if !p.IsPlugin() {
 		return name, icon

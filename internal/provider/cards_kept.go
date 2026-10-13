@@ -39,6 +39,8 @@ func accountCard(agent string) cardFace {
 		return cardFace{"Copilot", "githubcopilot"}
 	case QoderCNID:
 		return cardFace{"Qoder CN", "qoder"}
+	case KimiCodePlanID, KimiCodePlanCNID:
+		return cardFace{kimiCodeRegionOf(agent).name, "kimi"}
 	case "gemini", "antigravity":
 		app, _ := googleAppOf(agent)
 		return cardFace{app.name, app.icon}
@@ -59,7 +61,7 @@ func pluginCardFace(pp plugin.Provider) cardFace {
 // known by asking its CLI, Grok's are read by home, and a Kiro key has
 // one card for itself: their cards stay as the page read them.
 var cardAgents = []string{"claude", "codex", "copilot", "kiro", "zcode", "workbuddy", WorkBuddyAIID,
-	CommandCodePlanID, "qoder", QoderCNID, "zed", "devin", "factory", MiMoID, "gemini", "antigravity"}
+	CommandCodePlanID, "qoder", QoderCNID, "zed", "devin", "factory", MiMoID, "gemini", "antigravity", KimiCodePlanID, KimiCodePlanCNID}
 
 // cardLogins are the accounts the Usage page has a card of its own for,
 // as LoginUsage reads them, a built-in moved onto its plugin by the

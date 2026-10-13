@@ -802,6 +802,8 @@ func Logins(agent string) []Login {
 		return factoryLoginList()
 	case MiMoID:
 		return mimoLoginList()
+	case KimiCodePlanID, KimiCodePlanCNID:
+		return kimiCodeLoginList(agent)
 	case ChatGPTAPIID:
 		return siwcLoginList()
 	case "gemini", "antigravity":
@@ -828,7 +830,9 @@ func Logins(agent string) []Login {
 			{WorkBuddyAIID, func() []Login { return wbLoginList(wbAI) }}, {CommandCodePlanID, cmdLoginList},
 			{"qoder", func() []Login { return loginsOf(qoderLogins()) }},
 			{QoderCNID, func() []Login { return loginsOf(qoderLoginsOf(QoderCNID)) }}, {"zed", zedLoginList}, {"factory", factoryLoginList},
-			{MiMoID, mimoLoginList}, {ChatGPTAPIID, siwcLoginList}, {"gemini", func() []Login { return googleLoginList("gemini") }},
+			{MiMoID, mimoLoginList}, {KimiCodePlanID, func() []Login { return kimiCodeLoginList(KimiCodePlanID) }},
+			{KimiCodePlanCNID, func() []Login { return kimiCodeLoginList(KimiCodePlanCNID) }},
+			{ChatGPTAPIID, siwcLoginList}, {"gemini", func() []Login { return googleLoginList("gemini") }},
 			{"antigravity", func() []Login { return googleLoginList("antigravity") }},
 		} {
 			if !Moved(b.id) {
@@ -1044,6 +1048,8 @@ func switchLogin(agent, user string) error {
 		return switchFactoryLogin(user)
 	case MiMoID:
 		return switchMiMoLogin(user)
+	case KimiCodePlanID, KimiCodePlanCNID:
+		return switchKimiCodeLogin(agent, user)
 	case ChatGPTAPIID:
 		return switchSIWCLogin(user)
 	case "gemini", "antigravity":
@@ -1232,6 +1238,8 @@ func ForgetLogin(agent, user string) error {
 		return forgetFactoryLogin(user)
 	case MiMoID:
 		return forgetMiMoLogin(user)
+	case KimiCodePlanID, KimiCodePlanCNID:
+		return forgetKimiCodeLogin(agent, user)
 	case ChatGPTAPIID:
 		return forgetSIWCLogin(user)
 	case "gemini", "antigravity":

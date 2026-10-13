@@ -359,6 +359,11 @@ func (s *signInFlow) begin() error {
 		if err := startCopilotSignIn(s); err != nil {
 			return err
 		}
+	case KimiCodePlanID, KimiCodePlanCNID:
+		// Kimi's device code, with the OAuth client the Kimi Code CLI ships
+		if err := startKimiCodeSignIn(s, kimiCodeRegionOf(agent)); err != nil {
+			return err
+		}
 	case "workbuddy", WorkBuddyAIID:
 		// Tencent's sign-in, as WorkBuddy (CodeBuddy) or WorkBuddy AI makes it
 		if err := startWorkBuddySignIn(s, wbSiteOf(agent)); err != nil {

@@ -378,7 +378,7 @@ func fetchSubscriptionUsage(ctx context.Context) []SubscriptionQuota {
 		for _, p := range load().Providers {
 			hidden[p.ID] = hidden[p.ID] || p.ID != r.provider
 		}
-		for _, id := range []string{"claude", "cursor", "grok", "codex", "copilot", "kiro", "zcode", wbCN.id, wbAI.id, CommandCodePlanID, "qoder", QoderCNID, "zed", "devin", "factory", MiMoID, ChatGPTAPIID, "gemini", "antigravity"} {
+		for _, id := range []string{"claude", "cursor", "grok", "codex", "copilot", "kiro", "zcode", wbCN.id, wbAI.id, CommandCodePlanID, "qoder", QoderCNID, "zed", "devin", "factory", MiMoID, ChatGPTAPIID, "gemini", "antigravity", KimiCodePlanID, KimiCodePlanCNID} {
 			hidden[id] = hidden[id] || id != r.provider
 		}
 		for _, pp := range plugin.Cached() {
@@ -473,6 +473,11 @@ func fetchSubscriptionUsage(ctx context.Context) []SubscriptionQuota {
 	}
 	if !moved(MiMoID) && !hidden[MiMoID] {
 		fetches = append(fetches, perLogin(via(MiMoID), mimoLoginList(), accountCard(MiMoID))...)
+	}
+	for _, agent := range kimiCodeAgents {
+		if !hidden[agent] {
+			fetches = append(fetches, perLogin(via(agent), kimiCodeLoginList(agent), accountCard(agent))...)
+		}
 	}
 	for _, agent := range []string{"gemini", "antigravity"} {
 		if hidden[agent] {
